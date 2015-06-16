@@ -4,13 +4,18 @@ import sys
 
 def parse_map_file(path):
     map_grid = []
+    # Create a two-dimensional list based on the input data
     with open(path, 'r') as f:
         width, height = map(int, f.readline().split())
         for line in f:
             row = map(int, line.split())
             map_grid.append(row)
-    assert height == len(map_grid)
-    assert width == len(map_grid[0])
+    # Input checking
+    if height < 1 or width < 1:
+        raise ValueError('grid height and width should be >= 1')
+    elif height != len(map_grid) or width != len(map_grid[0]):
+        raise ValueError('actual map does not match declared map dimensions')
+
     return width, height, map_grid
 
 
@@ -51,19 +56,22 @@ def get_length_and_elevation(x, y, map_grid, path_lengths, final_elevations):
 
 
 def main():
-    sys.stdout.write('Processing...')
-    sys.stdout.flush()
+    if len(sys.argv) != 2:
+        sys.exit('Usage: {} <map file>'.format(sys.argv[0]))
+
+    print 'Parsing map data...'
     try:
         width, height, map_grid = parse_map_file(sys.argv[1])
     except IOError as e:
         sys.exit('Unable to read map file: {}'.format(e))
     except ValueError as e:
-        sys.exit('Invalid map file: {}'.format(sys.argv[1]))
+        sys.exit('Invalid map file: {}: {}'.format(sys.argv[1], e))
 
     # Initialize corresponding grids for path lengths and final elevations
     path_lengths = make_grid(width, height, -1)
     final_elevations = make_grid(width, height, -1)
 
+    print 'Finding the best path...'
     longest_path = -1
     steepest_drop = -1
 
@@ -75,7 +83,6 @@ def main():
                 longest_path = path_length
                 steepest_drop = drop
 
-    print '\rProcessing... DONE.'
     print '\nlength = {}, drop = {}\n'.format(longest_path, steepest_drop)
 
 
